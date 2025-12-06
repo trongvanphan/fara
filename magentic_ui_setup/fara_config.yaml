@@ -1,0 +1,54 @@
+# Magentic-UI Configuration for FARA-7B
+# This config sets up FARA-7B as the Web Surfer agent while using GPT-4o for other agents
+
+# Default client (used as fallback)
+gpt4o_client: &gpt4o_client
+  provider: OpenAIChatCompletionClient
+  config:
+    model: gpt-4o-2024-08-06
+    api_key: null  # Will use OPENAI_API_KEY env variable
+    base_url: null
+    max_retries: 5
+
+# FARA-7B client configuration for Web Surfer
+# Connects to local FARA server running on port 8000
+fara_client: &fara_client
+  provider: OpenAIChatCompletionClient
+  config:
+    model: Fara-7B
+    api_key: "not-needed"  # Local server doesn't need API key
+    base_url: "http://localhost:8000/v1"
+    max_retries: 10
+    model_info:
+      vision: true
+      function_calling: true
+      json_output: true
+      family: "unknown"
+      structured_output: false
+      multiple_system_messages: false
+  max_retries: 10
+
+# Client assignments
+# Orchestrator: Uses GPT-4o for planning and coordination
+orchestrator_client: *gpt4o_client
+
+# Coder: Uses GPT-4o for code generation
+coder_client: *gpt4o_client
+
+# Web Surfer: Uses FARA-7B for browser interaction (CUA)
+web_surfer_client: *fara_client
+
+# File Surfer: Uses GPT-4o for file operations
+file_surfer_client: *gpt4o_client
+
+# Action Guard: Uses GPT-4o nano for safety checks
+action_guard_client:
+  provider: OpenAIChatCompletionClient
+  config:
+    model: gpt-4o-mini
+    api_key: null
+    base_url: null
+    max_retries: 5
+
+# Plan Learning: Uses GPT-4o for learning from interactions
+plan_learning_client: *gpt4o_client

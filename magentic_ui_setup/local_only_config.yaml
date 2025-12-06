@@ -1,0 +1,104 @@
+# =============================================================
+# Magentic-UI Configuration - 100% LOCAL (Không cần OpenAI)
+# Sử dụng FARA-7B + Ollama để chạy hoàn toàn local
+# =============================================================
+# 
+# Hướng dẫn chi tiết: xem file LOCAL_LLM_GUIDE.md
+#
+# Yêu cầu:
+#   1. Ollama đang chạy:     ollama serve
+#   2. Đã pull model:        ollama pull qwen2.5:7b
+#   3. FARA server chạy:     ./start_fara_server.sh
+#
+# Chạy Magentic-UI:
+#   magentic-ui --port 8081 --config local_only_config.yaml
+# =============================================================
+
+# =============================================================
+# FARA-7B cho Web Surfer (Computer Use Agent)
+# - Chạy trên: http://localhost:8000
+# - Chuyên về browser automation, web browsing
+# =============================================================
+fara_client: &fara_client
+  provider: OpenAIChatCompletionClient
+  config:
+    model: Fara-7B
+    api_key: "not-needed"
+    base_url: "http://localhost:8000/v1"
+    max_retries: 10
+    model_info:
+      vision: true
+      function_calling: true
+      json_output: true
+      family: "unknown"
+      structured_output: false
+      multiple_system_messages: false
+
+# =============================================================
+# Ollama cho các agents khác (Orchestrator, Coder, etc.)
+# - Chạy trên: http://localhost:11434
+# - Sử dụng OpenAI-compatible API của Ollama
+# 
+# Các model khuyến nghị (chọn 1):
+#   - qwen2.5:7b   (5GB RAM)  - Nhanh, nhẹ
+#   - qwen2.5:14b  (10GB RAM) - Cân bằng
+#   - qwen2.5:32b  (20GB RAM) - Mạnh nhất
+#   - llama3.1:8b  (5GB RAM)  - Alternative
+#   - mistral:7b   (4GB RAM)  - Nhẹ nhất
+# =============================================================
+ollama_client: &ollama_client
+  provider: OpenAIChatCompletionClient
+  config:
+    model: "phi4:latest"  # ← Đổi sang phi4 (mạnh hơn qwen2.5:7b)
+    api_key: "ollama"    # Ollama không cần key thực
+    base_url: "http://localhost:11434/v1"
+    max_retries: 5
+    timeout: 300  # 5 phút timeout
+    model_info:
+      vision: false
+      function_calling: true
+      json_output: true
+      family: "unknown"
+      structured_output: false
+      multiple_system_messages: false
+
+# =============================================================
+# Ollama với Vision model (Optional - cho File Surfer)
+# Pull model: ollama pull llava:7b
+# =============================================================
+ollama_vision_client: &ollama_vision_client
+  provider: OpenAIChatCompletionClient
+  config:
+    model: "llava:7b"
+    api_key: "ollama"
+    base_url: "http://localhost:11434/v1"
+    max_retries: 5
+    model_info:
+      vision: true
+      function_calling: true
+      json_output: true
+      family: "unknown"
+      structured_output: false
+      multiple_system_messages: false
+
+# =============================================================
+# Client Assignments - Tất cả LOCAL, không cần OpenAI
+# =============================================================
+
+# Orchestrator: Điều phối các agents - dùng model mạnh
+orchestrator_client: *ollama_client
+
+# Coder: Viết code
+coder_client: *ollama_client
+
+# Web Surfer: Browse web - dùng FARA-7B (chuyên về web browsing)
+web_surfer_client: *fara_client
+
+# File Surfer: Xem files (dùng vision model nếu có)
+file_surfer_client: *ollama_client
+
+# Action Guard: Kiểm tra safety
+action_guard_client: *ollama_client
+
+# Plan Learning: Học từ interactions
+plan_learning_client: *ollama_client

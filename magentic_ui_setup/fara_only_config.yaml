@@ -1,0 +1,70 @@
+# =============================================================
+# Magentic-UI Configuration - FARA-7B ONLY (100% Local)
+# =============================================================
+# 
+# 🎯 Ưu điểm:
+#   - Chỉ cần 1 model duy nhất (FARA-7B)
+#   - Không cần Ollama
+#   - Đơn giản hơn, dễ setup
+#   - FARA có vision + function calling
+#
+# ⚠️ Lưu ý:
+#   - FARA được optimize cho web browsing
+#   - Coding tasks có thể không bằng model chuyên code
+#   - Cần ~8GB VRAM (GPU) hoặc ~16GB RAM (CPU)
+#
+# 🚀 Cách sử dụng:
+#   1. Chạy FARA server:
+#      cd /Users/trongpv6/Documents/GitHub/poc-code/fara
+#      source .venv/bin/activate
+#      python -m llama_cpp.server \
+#          --model model_checkpoints/microsoft_Fara-7B-Q8_0.gguf \
+#          --clip_model_path model_checkpoints/Qwen2.5-VL-7B-Instruct-mmproj-f16.gguf \
+#          --port 8000 --host 0.0.0.0 --n_ctx 4096 --chat_format chatml
+#
+#   2. Chạy Magentic-UI:
+#      export DOCKER_HOST=unix:///Users/trongpv6/.docker/run/docker.sock
+#      source /Users/trongpv6/Documents/GitHub/poc-code/magentic-ui-custom/venv/bin/activate
+#      magentic-ui --port 8081 --config fara_only_config.yaml
+#
+# =============================================================
+
+# FARA-7B client configuration
+# Multimodal model với vision support
+fara_client: &fara_client
+  provider: OpenAIChatCompletionClient
+  config:
+    model: Fara-7B
+    api_key: "not-needed"
+    base_url: "http://localhost:8000/v1"
+    max_retries: 10
+    timeout: 300  # 5 phút timeout cho các tasks phức tạp
+    model_info:
+      vision: true
+      function_calling: true
+      json_output: true
+      family: "unknown"
+      structured_output: false
+      multiple_system_messages: false
+
+# =============================================================
+# Tất cả agents sử dụng FARA-7B
+# =============================================================
+
+# Orchestrator: Điều phối và lập kế hoạch
+orchestrator_client: *fara_client
+
+# Coder: Viết và chỉnh sửa code
+coder_client: *fara_client
+
+# Web Surfer: Browse web (điểm mạnh của FARA!)
+web_surfer_client: *fara_client
+
+# File Surfer: Xem và phân tích files (có vision support)
+file_surfer_client: *fara_client
+
+# Action Guard: Kiểm tra safety
+action_guard_client: *fara_client
+
+# Plan Learning: Học từ interactions
+plan_learning_client: *fara_client
